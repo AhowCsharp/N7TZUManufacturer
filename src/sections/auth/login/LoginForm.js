@@ -15,8 +15,8 @@ export default function LoginForm() {
   const navigate = useNavigate();
 
   const [showPassword, setShowPassword] = useState(false);
-  const [acc,setAcc] = useState('');
-  const [pw,setPw] = useState('');
+  const [acc,setAcc] = useState('testm');
+  const [pw,setPw] = useState('testm');
 
   const parseJwt = (token) => {
     try {
@@ -32,7 +32,7 @@ export default function LoginForm() {
     
     try {
       
-      const response = await axios.post(`${API_PATH}/super/login`, { Account: acc, Password: pw });  
+      const response = await axios.post(`${API_PATH}/manufacturer/login`, { Account: acc, Password: pw });  
       console.log(response)
       if (response.status === 200) {
         localStorage.setItem('token', response.data.source); 
@@ -40,7 +40,7 @@ export default function LoginForm() {
         console.log(decodedToken)
         localStorage.setItem('name',  decodedToken.Name); 
         localStorage.setItem('id',  decodedToken.Id); 
-        navigate('/admin/superadmins', { replace: true })
+        navigate('/manufacturer/info', { replace: true })
       }
     } catch (error) {
         alert(error.response.data)

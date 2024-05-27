@@ -7,18 +7,8 @@ const icon = (name) => <SvgColor src={`/assets/icons/navbar/${name}.svg`} sx={{ 
 
 const AdminConfig = [
   {
-    title: '超級管理者列表',
-    path: '/admin/superadmins',
-    icon: icon('ic_analytics')
-  },
-  {
-    title: '廠商列表',
-    path: '/admin/manufacturers',
-    icon: icon('ic_analytics')
-  },
-  {
-    title: '賞品列表',
-    path: '/admin/commodities',
+    title: '廠商資訊',
+    path: '/manufacturer/info',
     icon: icon('ic_analytics')
   }
 ];

@@ -70,7 +70,7 @@ export default function LoginPage() {
         <Container maxWidth="sm">
           <StyledContent>
             <Typography variant="h4" gutterBottom>
-              Sign in to N7TZU
+              Sign in to N7TZU_廠商後台系統
             </Typography>
 
             {/* <Typography variant="body2" sx={{ mb: 5 }}>

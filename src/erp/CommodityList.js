@@ -10,14 +10,22 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
-import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import dayjs from 'dayjs';
+import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { IconButton } from '@mui/material';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import TablePagination from '@mui/material/TablePagination';
-import Autocomplete from '@mui/material/Autocomplete';
 import { Link,useNavigate } from 'react-router-dom';
-import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
+import LockResetIcon from '@mui/icons-material/LockReset';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import CancelIcon from '@mui/icons-material/Cancel';
-import CommoditySearch from '../search/CommoditySearch';
-
+import ManufacturerSearch from '../search/ManufacturerSearch';
+import FinishedAlert from '../finishView/FinishedAlert';
 
 
 const API_PATH = process.env.REACT_APP_API_PATH;
@@ -26,48 +34,67 @@ const columnVisibilityModel = {
   id:true
 }
 
-export default function CommodityList() {
+export default function ManufacturerList() {
   LicenseInfo.setLicenseKey('9af075c09b5df7441264261f25d3d08eTz03ODI4MyxFPTE3MzEwNzgzMTkwMDAsUz1wcm8sTE09c3Vic2NyaXB0aW9uLEtWPTI=');
   const navigate = useNavigate();
   const [rows, setRows] = useState([]);
   const [filterRows,setFilterRows] = useState([]);
-  const [statusOpen, setStatusOpen] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [moneyOpen, setMoneyOpen] = useState(false);
   const [page, setPage] = useState(0);
   const [totalRows, setTotalRows] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(50);
-  const [status,setStatus] = useState(1);
-  const [commodityId,setCommodityId] = useState(null);
-  const [options, setOptions] = useState([]);
+  const [okOpen,setOkopen] = useState(false);
+  const [newPw,setNewPw] = useState('');
+
+  const [request, setRequest] = useState({
+    id : 0,
+    account: "",
+    password: "",
+    name: "",
+    servicePercentage: 0,
+    stockAmount: 0,
+    safeAmount: 0,
+    sort: 0,
+    startDate: dayjs(),
+    endDate: dayjs().add(1, 'year'),
+  });
   const columns = [
     { field: 'id', headerName: 'ID', width: 90 },
     {
-      field: 'imgUrl',
-      headerName: '圖片',
-      width: 70,
-      editable: false,
-    },
-    {
-      field: 'manufacturerName',
-      headerName: '廠商',
-      width: 120,
-      editable: false,
-    },
-    {
-      field: 'commodityUid',
-      headerName: '商品編號',
-      width: 70,
-      editable: false,
-    },
-    {
       field: 'name',
-      headerName: '賞品名稱',
+      headerName: '名稱',
       width: 120,
       editable: false,
     },
     {
-      field: 'category',
-      headerName: '賞品類別',
+      field: 'account',
+      headerName: '帳號',
+      width: 70,
+      editable: false,
+    },
+    {
+      field: 'servicePercentage',
+      headerName: '服務費%數',
       width: 120,
+      editable: false,
+    },
+    {
+      field: 'stockAmount',
+      headerName: '剩餘安全量',
+      width: 120,
+      editable: false,
+    },
+    {
+      field: 'safeAmount',
+      headerName: '目前安全量',
+      width: 120,
+      editable: false,
+    },
+    {
+      field: 'sort',
+      headerName: '商城排序',
+      width: 70,
       editable: false,
     },
     {
@@ -75,28 +102,30 @@ export default function CommodityList() {
       headerName: '狀態',
       width: 120,
       editable: false,
-      valueFormatter: (params) => {
-        switch (params.value) {
-          case 1:
-            return '上架中';
-          case 2:
-            return '下架中';
-          case 3:
-            return '準備中';
-          case 4:
-            return '未知';
-          case 5:
-            return '未知';
-          default:
-            return '未知';
-        }
-      },
     },
     {
-      field: 'totalDrawOutTimes',
-      headerName: '總抽籤數',
-      width: 70,
+      field: 'startDate',
+      headerName: '合約起始',
+      width: 180,
       editable: false,
+      valueFormatter: (params) => { 
+        const date = new Date(params.value || new Date());
+        const minutes = (`0${  date.getMinutes()}`).slice(-2); 
+        const hours = (`0${  date.getHours()}`).slice(-2);     
+        return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()} ${hours}:${minutes}`;
+      }, 
+    },
+    {
+      field: 'endDate',
+      headerName: '合約截止',
+      width: 180,
+      editable: false,
+      valueFormatter: (params) => { 
+        const date = new Date(params.value || new Date());
+        const minutes = (`0${  date.getMinutes()}`).slice(-2); 
+        const hours = (`0${  date.getHours()}`).slice(-2);     
+        return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()} ${hours}:${minutes}`;
+      }, 
     },
     {
       field: 'creator',
@@ -137,27 +166,27 @@ export default function CommodityList() {
           return null;      
       }, 
     },
-    // {
-    //   field: 'Operation',
-    //   headerName: '操作',
-    //   width: 120,
-    //   renderCell: (params) => (
-    //     <>
-    //       <IconButton aria-label="edit" onClick={() => handleOpenForm('edit',params.row)}>
-    //         <EditIcon />
-    //       </IconButton>
-    //       <IconButton aria-label="delete" onClick={() => handleDeleteSubmit(params.row.id)}>
-    //         <DeleteIcon />
-    //       </IconButton>
-    //     </>
+    {
+      field: 'Operation',
+      headerName: '操作',
+      width: 150,
+      renderCell: (params) => (
+        <>
+          <IconButton aria-label="reset" onClick={() => resetManufacturerAdminPassword(params.row.id)}>
+            <LockResetIcon />
+          </IconButton>
+          <IconButton aria-label="edit" onClick={() => handleOpenForm('edit',params.row)}>
+            <EditIcon />
+          </IconButton>
+          <IconButton aria-label="delete" onClick={() => handleDeleteSubmit(params.row.id)}>
+            <DeleteIcon />
+          </IconButton>
+        </>
   
-    //   ),
-    // },
+      ),
+    },
   ];
-  const [selectedOption, setSelectedOption] = useState({
-    id: 2,
-    name: "ddd"
-});
+
   const handleChangePage = (event, newPage) => {
     setPage(newPage)
   };
@@ -166,31 +195,25 @@ export default function CommodityList() {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
-  const handleManufacturerChange = (event, newValue) => {
-    setSelectedOption(newValue);
-  };
 
-  const fetchManufacturerOptionsData = async () => {
-    try {
-      const response = await axios.get(`${API_PATH}/super/manufacturerAdmins?pageNumber=${1}&pageSize=${500000}`);
-      if (response.status === 200) { 
-        setOptions(response.data.source);
-      }
-    } catch (error) {
-      console.error('Error fetching data: ', error);
-  
-      if (error.response && error.response.status === 401) {
-        // Unauthorized
-        navigate('/login', { replace: true });
-      } else {
-        alert('發生錯誤');
-      }
+  const handleDeleteSubmit = async (id) => {
+    // 使用 confirm 对话框要求用户确认
+    if (window.confirm("確認刪除嗎? 該廠商所有賞品訂單資料都將刪除 請謹慎操作")) {
+        try {
+            const response = await axios.delete(`${API_PATH}/super/manufacturerAdmin?id=${id}`);
+            if (response.status === 200) {
+                fetchData();
+            }
+        } catch (error) {
+            console.error("Error deleting record:", error);
+            alert('請確認資料型態有無錯誤');
+        }
     }
-  };
+};
   
   const fetchData = async () => {
     try {
-      const response = await axios.get(`${API_PATH}/super/commodities?manufacturerId=${selectedOption.id}&pageNumber=${page+1}&pageSize=${rowsPerPage}`);
+      const response = await axios.get(`${API_PATH}/super/manufacturerAdmins?pageNumber=${page+1}&pageSize=${rowsPerPage}`);
   
       if (response.status === 200) { 
         setRows(response.data.source);
@@ -208,35 +231,136 @@ export default function CommodityList() {
       }
     }
   };
-  const handleStatusOpenForm = async (row) => {
-    setCommodityId(row.id)
-    setStatusOpen(true);
-  };
-
-  const handleStatusCloseForm = async () => {
-    setStatusOpen(false);
-  };
-
-const updateCommodityStatus = async () => {
+  const handleOkOpen = () => {
+    setOkopen(true);
+  }
+  // eslint-disable-next-line consistent-return
+  const resetManufacturerAdminPassword = async (manufacturerId) => {
+    // 弹出确认对话框
+    const confirmReset = window.confirm("您確定要重製該廠商密碼？");
+    if (!confirmReset) {
+      return; // 如果用户点击“取消”，则不执行任何操作
+    }
+  
     try {
-      // 发送 PUT 请求
-      const response = await axios.put(`${API_PATH}/super/status?id=${commodityId}&status=${status}`);
-      // 处理响应
+      const response = await axios.put(`${API_PATH}/super/manufacturerpw?manufacturerId=${manufacturerId}`);
       if (response.status === 200) {
-        handleStatusCloseForm();
-        await fetchData();
+        setNewPw(response.data.source); // 设置新密码
+        handleOkOpen(); // 打开一个成功提示的对话框或其他反馈机制
       }
     } catch (error) {
-      console.error('Failed to update status:', error.response ? error.response.data : 'Unknown error');
-      throw error;
+      console.error('Failed to reset password', error.response || error);
+      alert('重製該廠商密碼失敗：');
+      throw error; // 抛出错误，允许调用者知道操作失败
+    }
+  }
+  const handleMoneyOpenForm = async (row) => {
+      setRequest({
+        id : row.id,
+        account: row.account,
+        password: row.password,
+        name: row.name,
+        servicePercentage: row.servicePercentage,
+        stockAmount: row.stockAmount,
+        safeAmount: row.safeAmount,
+        sort: row.sort,
+        startDate: dayjs(row.startDate),
+        endDate: dayjs(row.endDate),
+      });
+    
+    setMoneyOpen(true);
+  };
+
+  const handleMoenyCloseForm = async () => {
+    setMoneyOpen(false);
+  };
+  const handleOpenForm = async (model,row) => {
+    if(model === 'create'){
+      setRequest({
+        id : 0,
+        account: "",
+        password: "",
+        name: "",
+        servicePercentage: 0,
+        stockAmount: 0,
+        safeAmount: 0,
+        sort: 0,
+        startDate: dayjs(),
+        endDate: dayjs().add(1, 'year'),
+      });
+    }
+    if(model === 'edit'){
+      setRequest({
+        id : row.id,
+        account: row.account,
+        password: row.password,
+        name: row.name,
+        servicePercentage: row.servicePercentage,
+        stockAmount: row.stockAmount,
+        safeAmount: row.safeAmount,
+        sort: row.sort,
+        startDate: dayjs(row.startDate),
+        endDate: dayjs(row.endDate),
+      });
+    }
+    setOpen(true);
+  };
+
+  const handleCloseForm = async () => {
+    setOpen(false);
+  };
+
+  const handleInputChange = (event, propertyName) => {
+    console.log(event)
+    console.log(propertyName)
+    if(propertyName === "startDate" || propertyName === "endDate" ) {
+      setRequest((prevData) => ({
+        ...prevData,
+        [propertyName]:dayjs(event).format('YYYY-MM-DD')
+      }));
+    }else {
+      const value = event.target.value;
+      setRequest((prevData) => ({
+        ...prevData,
+        [propertyName]: value,
+      }));
+    }
+  };
+
+  const handleSubmit = async () => {    
+    try {
+        const response = await axios.post(`${API_PATH}/super/manufacturerAdmin`, request);
+        if (response.status === 200) {
+          alert('成功');
+          handleCloseForm();
+          fetchData();
+        }
+    } catch (error) {
+      alert(error.response.data)
+    }                    
+  }
+
+// eslint-disable-next-line consistent-return
+const updateManufacturerMoney = async () => {
+    const requestData = {
+        id:request.id,
+        Money: request.stockAmount
+    };
+    try {
+        const response = await axios.put(`${API_PATH}/super/money`, requestData);
+
+        if (response.status === 200) {
+          handleMoenyCloseForm();
+          await fetchData();
+        }
+    } catch (error) {
+        alert(error.response.data)
     }
 };
 
-useEffect(() => {
-  fetchData();
-  fetchManufacturerOptionsData();
-}, [page, rowsPerPage,selectedOption]); 
-
+  useEffect(() => {
+    fetchData();
+  }, [page,rowsPerPage]); 
 
   return (
     <>
@@ -244,36 +368,17 @@ useEffect(() => {
       <Grid container spacing={2} style={{marginBottom:'1%'}}>
             <Grid item xs={12} style={{display:'flex',justifyContent:'center'}}>      
                 <Typography variant="h2" component="h2">
-                    賞品列表 
+                    廠商列表 
                 </Typography>
             </Grid>
-            <Grid item xs={12} style={{display:'flex'}}>  
-              <Typography variant="h6" component="h6">
-                  選擇廠商 : 
-              </Typography>    
-            </Grid>
-            <Grid item xs={10} style={{display:'flex'}}>  
-              <Autocomplete
-                  disablePortal
-                  id="combo-box-demo"
-                  options={options}
-                  sx={{ width: '20%',marginLeft:'3%' }}
-                  value={selectedOption}
-                  onChange={handleManufacturerChange}
-                  getOptionLabel={(option) => `${option.id}-廠商 : ${option.name}`}
-                  // 设置renderInput来渲染输入元件，并确保输入框的id与label的htmlFor相匹配
-                  renderInput={(params) => <TextField {...params} />}
-              />
-            </Grid>
-            <Grid item xs={12} style={{display:'flex'}}>  
-              <CommoditySearch rows={rows} setFilterRows={setFilterRows}/> 
-            </Grid>
+            <ManufacturerSearch rows={rows} setFilterRows={setFilterRows}/>
+            <Button onClick={() =>handleOpenForm('create')} startIcon={<AddCircleOutlineIcon/>}>新增廠商</Button>  
       </Grid>
       <DataGridPro
         rows={filterRows}
         columns={columns}
         disableRowSelectionOnClick
-        onCellDoubleClick={handleStatusOpenForm}
+        onCellDoubleClick={handleMoneyOpenForm}
       />
       <TablePagination
       component="div"
@@ -285,7 +390,140 @@ useEffect(() => {
       rowsPerPageOptions={[50,100,200,500]} 
     />
     </Box>
-      <Dialog open={statusOpen} 
+    <Dialog open={open} 
+          BackdropProps={{
+            style: {
+              backgroundColor: 'transparent',
+            },
+          }}
+          PaperProps={{
+            style: {
+              width: '600px',
+            },
+          }}
+      >
+        <DialogTitle style={{justifyContent:'center',display:'flex',fontSize:'16px'}}>{request.id === 0?'新增廠商':'修改廠商'}</DialogTitle>
+        <DialogContent>
+            <Box sx={{ flexGrow: 0 }}>
+                <Grid container spacing={2}>.                  
+                    <Grid item xs={12} sx={{ mt: 1 }} style={{justifyContent:'center',display:'flex' }}>
+                        <TextField
+                        fullWidth 
+                        id="outlined-number"
+                        size="small"
+                        label="廠商名稱"
+                        InputLabelProps={{
+                            shrink: true,
+                        }}
+                        value={request.name}
+                        onChange={(e) => handleInputChange(e, 'name')}
+                        />
+                    </Grid>
+                    <Grid item xs={12} sx={{ mt: 1 }} style={{justifyContent:'center',display:'flex' }}>
+                        <TextField
+                        fullWidth 
+                        id="outlined-number"
+                        size="small"
+                        label="帳號"
+                        InputLabelProps={{
+                            shrink: true,
+                        }}                     
+                        value={request.account}
+                        onChange={(e) => handleInputChange(e, 'account')}
+                        />
+                    </Grid>
+                    <Grid item xs={12} sx={{ mt: 1 }} style={{justifyContent:'center',display:'flex' }}>
+                        <TextField
+                        fullWidth 
+                        id="outlined-number"
+                        size="small"
+                        label="密碼"
+                        InputLabelProps={{
+                            shrink: true,
+                        }}                     
+                        disabled={request.id !== 0}
+                        value={request.password}
+                        onChange={(e) => handleInputChange(e, 'password')}
+                        />
+                    </Grid>
+                    <Grid item xs={12} sx={{ mt: 1 }} style={{justifyContent:'center',display:'flex' }}>
+                        <TextField
+                        fullWidth 
+                        id="outlined-number"
+                        size="small"
+                        label="服務費%數"
+                        InputLabelProps={{
+                            shrink: true,
+                        }}
+                        value={request.servicePercentage}
+                        onChange={(e) => handleInputChange(e, 'servicePercentage')}
+                        />
+                    </Grid>
+                    <Grid item xs={12} sx={{ mt: 1 }} style={{justifyContent:'center',display:'flex' }}>
+                        <TextField
+                        fullWidth 
+                        id="outlined-number"
+                        size="small"
+                        label="剩餘安全量"
+                        InputLabelProps={{
+                            shrink: true,
+                        }}
+                        disabled
+                        value={request.stockAmount}
+                        />
+                    </Grid>
+                    <Grid item xs={12} sx={{ mt: 1 }} style={{justifyContent:'center',display:'flex' }}>
+                        <TextField
+                        fullWidth 
+                        id="outlined-number"
+                        size="small"
+                        label="安全量門檻"
+                        InputLabelProps={{
+                            shrink: true,
+                        }}
+                        value={request.safeAmount}
+                        onChange={(e) => handleInputChange(e, 'safeAmount')}
+                        />
+                    </Grid>
+                    <Grid item xs={12} sx={{ mt: 1 }} style={{justifyContent:'center',display:'flex' }}>
+                        <TextField
+                        fullWidth 
+                        id="outlined-number"
+                        size="small"
+                        label="商城排序"
+                        InputLabelProps={{
+                            shrink: true,
+                        }}
+                        value={request.sort}
+                        onChange={(e) => handleInputChange(e, 'sort')}
+                        />
+                    </Grid>
+                    <Grid item xs={12} sx={{ mt: 1 }} style={{justifyContent:'center',display:'flex' }}>
+                      <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <DatePicker
+                          label="Start Date"
+                          value={dayjs(request.startDate)}
+                          onChange={(e) => handleInputChange(e, 'startDate')}
+                          renderInput={(params) => <TextField {...params} />}
+                        />
+                        <DatePicker
+                          label="End Date"
+                          value={dayjs(request.endDate)}
+                          onChange={(e) => handleInputChange(e, 'endDate')}
+                          renderInput={(params) => <TextField {...params} />}
+                        />
+                      </LocalizationProvider>
+                    </Grid>
+                </Grid>
+            </Box> 
+        </DialogContent>
+        <DialogActions>
+              <Button onClick={handleSubmit}>送出</Button>  
+              <Button onClick={handleCloseForm}>取消</Button>  
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={moneyOpen} 
           BackdropProps={{
             style: {
               backgroundColor: 'transparent',
@@ -297,36 +535,32 @@ useEffect(() => {
             },
           }}
       >
-        <DialogTitle style={{justifyContent:'center',display:'flex',fontSize:'16px'}}>商品狀態修改</DialogTitle>
+        <DialogTitle style={{justifyContent:'center',display:'flex',fontSize:'16px'}}>派發安全代幣</DialogTitle>
         <DialogContent>
             <Box sx={{ flexGrow: 0 }}>
                 <Grid container spacing={2}>.                  
                     <Grid item xs={12} sx={{ mt: 1 }} style={{justifyContent:'center',display:'flex' }}>
-                    <FormControl fullWidth size="small">
-                    <InputLabel id="stock-amount-label">商品狀態</InputLabel>
-                    <Select
-                        labelId="stock-amount-label"
-                        id="stock-amount-select"
-                        value={status}
-                        label="商品狀態"
-                        onChange={(e) => setStatus(e.target.value)}
-                    >
-                        <MenuItem value={1}>上架中</MenuItem>
-                        <MenuItem value={2}>已下架</MenuItem>
-                        <MenuItem value={3}>準備中</MenuItem>
-                        <MenuItem value={4}>40</MenuItem>
-                        <MenuItem value={5}>50</MenuItem>
-                    </Select>
-                </FormControl>
+                        <TextField
+                        fullWidth 
+                        id="outlined-number"
+                        size="small"
+                        label="剩餘安全量"
+                        InputLabelProps={{
+                            shrink: true,
+                        }}
+                        onChange={(e) => handleInputChange(e, 'stockAmount')}
+                        value={request.stockAmount}
+                        />
                     </Grid>
                 </Grid>
             </Box> 
         </DialogContent>
         <DialogActions>
-              <Button onClick={updateCommodityStatus} startIcon={<AutoFixHighIcon/>}>送出</Button>  
-              <Button onClick={handleStatusCloseForm} startIcon={<CancelIcon/>}>取消</Button>  
+              <Button onClick={updateManufacturerMoney} startIcon={<AttachMoneyIcon/>}>取消</Button>  
+              <Button onClick={handleMoenyCloseForm} startIcon={<CancelIcon/>}>取消</Button>  
         </DialogActions>
       </Dialog>
+      <FinishedAlert okOpen={okOpen} handleOkClose={()=>setOkopen(false)} title={'操作成功'} message={`新密碼為:${newPw}`}/>
     </>
   );
 }

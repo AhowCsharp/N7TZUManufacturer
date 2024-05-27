@@ -6,9 +6,8 @@ import SimpleLayout from './layouts/simple';
 import LoginPage from './pages/LoginPage';
 import Page404 from './pages/Page404';
 
-import SuperAdminList from './erp/SuperAdminList';
-import ManufacturerList from './erp/ManufacturerList';
-import CommodityList from './erp/CommodityList';
+import ManufacturerInfo from './erp/ManufacturerInfo';
+
 // ----------------------------------------------------------------------
 
 export default function Router() {
@@ -22,13 +21,11 @@ export default function Router() {
       element: <LoginPage />,
     },
     {
-      path: '/admin',
+      path: '/manufacturer',
       element: <DashboardLayout />,
       children: [
-        { element: <Navigate to="/superadmins" />, index: true },
-        { path: 'superadmins', element: <SuperAdminList /> },
-        { path: 'manufacturers', element: <ManufacturerList /> },
-        { path: 'commodities', element: <CommodityList /> },
+        { element: <Navigate to="/info" />, index: true },
+        { path: 'info', element: <ManufacturerInfo /> },
       ],
     },
     {
