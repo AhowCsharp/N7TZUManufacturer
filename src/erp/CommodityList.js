@@ -34,7 +34,7 @@ const columnVisibilityModel = {
   id:true
 }
 
-export default function ManufacturerList() {
+export default function CommodityList() {
   LicenseInfo.setLicenseKey('9af075c09b5df7441264261f25d3d08eTz03ODI4MyxFPTE3MzEwNzgzMTkwMDAsUz1wcm8sTE09c3Vic2NyaXB0aW9uLEtWPTI=');
   const navigate = useNavigate();
   const [rows, setRows] = useState([]);
@@ -62,19 +62,19 @@ export default function ManufacturerList() {
   const columns = [
     { field: 'id', headerName: 'ID', width: 90 },
     {
-      field: 'name',
-      headerName: '名稱',
+      field: 'commodityUid',
+      headerName: '賞品編碼',
       width: 120,
       editable: false,
     },
     {
-      field: 'account',
-      headerName: '帳號',
+      field: 'name',
+      headerName: '賞品名稱',
       width: 70,
       editable: false,
     },
     {
-      field: 'servicePercentage',
+      field: 'category',
       headerName: '服務費%數',
       width: 120,
       editable: false,

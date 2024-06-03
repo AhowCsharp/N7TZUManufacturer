@@ -1,9 +1,9 @@
 #!/bin/bash
-host=n7tzu.org
-path=/x/srv/www
+host=ubuntu@n7tzu.org
+path=/x/N7TZUManufacturer
 npm run build
 cd build
-tar -zcvf ../www.tar.gz *
+tar -zcvf ../N7TZUManufacturer.tgz *
 cd ..
-scp www.tar.gz $host:$path
-ssh $host tar zxvf $path/www.tar.gz -C $path/html
+scp N7TZUManufacturer.tgz $host:$path
+ssh $host tar zxvf $path/N7TZUManufacturer.tgz -C $path/build

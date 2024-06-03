@@ -10,6 +10,11 @@ const AdminConfig = [
     title: '廠商資訊',
     path: '/manufacturer/info',
     icon: icon('ic_analytics')
+  },
+  {
+    title: '賞品管理',
+    path: '/manufacturer/commodity',
+    icon: icon('ic_analytics')
   }
 ];
 

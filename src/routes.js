@@ -7,6 +7,7 @@ import LoginPage from './pages/LoginPage';
 import Page404 from './pages/Page404';
 
 import ManufacturerInfo from './erp/ManufacturerInfo';
+import CommodityManage from './erp/CommodityManage';
 
 // ----------------------------------------------------------------------
 
@@ -26,6 +27,7 @@ export default function Router() {
       children: [
         { element: <Navigate to="/info" />, index: true },
         { path: 'info', element: <ManufacturerInfo /> },
+        { path: 'commodity', element: <CommodityManage /> },
       ],
     },
     {
