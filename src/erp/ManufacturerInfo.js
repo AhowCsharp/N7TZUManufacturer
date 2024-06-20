@@ -61,7 +61,7 @@ export default function ManufacturerInfo() {
         // Unauthorized
         navigate('/login', { replace: true });
       } else {
-        alert('發生錯誤');
+        alert('權限不足 跳回登入頁');
       }
     }
   };

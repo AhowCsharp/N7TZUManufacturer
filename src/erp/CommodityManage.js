@@ -3,6 +3,7 @@ import { useState,useRef,useEffect,useCallback} from 'react';
 import axios from 'axios';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
+import { useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import { LicenseInfo,DataGridPro } from '@mui/x-data-grid-pro';
 import Button from '@mui/material/Button';
@@ -17,7 +18,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import DialogTitle from '@mui/material/DialogTitle';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import SaveAsIcon from '@mui/icons-material/SaveAs';
-import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { FormControl, InputLabel, Select, MenuItem,useMediaQuery } from '@mui/material';
 import TablePagination from '@mui/material/TablePagination';
 import AddToHomeScreenIcon from '@mui/icons-material/AddToHomeScreen';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
@@ -26,16 +27,32 @@ import AddToPhotosIcon from '@mui/icons-material/AddToPhotos';
 import DashboardCustomizeIcon from '@mui/icons-material/DashboardCustomize';
 import EditIcon from '@mui/icons-material/Edit';
 import Stack from '@mui/material/Stack';
+import ReactQuill, { Quill } from 'react-quill';
+import * as Emoji from "quill-emoji";
+import 'react-quill/dist/quill.snow.css';  
+import 'quill-emoji/dist/quill-emoji.css'; 
 import { v4 as uuidv4 } from 'uuid';
 import { PhotoCamera } from '@mui/icons-material';
 import CommoditySearch from '../search/CommoditySearch';
+
+Quill.register("modules/emoji", Emoji);
+const toolbarOptions = {
+  container: [
+    ['bold', 'italic', 'underline', 'strike'],
+    ['emoji'],   
+  ],
+  handlers: {'emoji': function() {}}
+}
 
 const API_PATH = process.env.REACT_APP_API_PATH;
 
 export default function CommodityManage() {
   LicenseInfo.setLicenseKey('9af075c09b5df7441264261f25d3d08eTz03ODI4MyxFPTE3MzEwNzgzMTkwMDAsUz1wcm8sTE09c3Vic2NyaXB0aW9uLEtWPTI=');
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
   const [rows, setRows] = useState([]);
+  const [introduce, setIntroduce] = useState('');
   const [filterRows,setFilterRows] = useState([]);
   const [commodityFormOpen, setCommodityFormOpen] = useState(false);
   const [page, setPage] = useState(0);
@@ -196,21 +213,14 @@ export default function CommodityManage() {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      const img = new Image();
-      img.onload = () => {
-        // img.width === 800 && img.height === 800
-        if ( true) {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            setImage(file);
-            setImagePreviewUrl(reader.result);
-          };
-          reader.readAsDataURL(file);
-        } else {
-          alert('圖片尺寸必須為800px * 800px');
-          setImage(null);
-          setImagePreviewUrl('');
-        }
+        const img = new Image();
+        img.onload = () => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImage(file);
+          setImagePreviewUrl(reader.result);
+        };
+        reader.readAsDataURL(file);
       };
       img.onerror = () => {
         alert('無效的圖片文件');
@@ -224,6 +234,13 @@ export default function CommodityManage() {
     setPage(newPage)
   };
 
+  const handleKeyDown = (event) => {  
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      setIntroduce(prev => `${prev  }<br/>`);
+    }
+  };
+
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
@@ -234,16 +251,17 @@ export default function CommodityManage() {
         id,
         Name:name,
         Category:category,
-        ManufacurerId:localStorage.getItem('id'),
+        ManufacturerId:localStorage.getItem('id'),
         Status:commodityStatus,
         DrawOut1Price:drawOut1Price,
         DrawOut5Price:drawOut5Price,
         DrawOut10Price:drawOut10Price,
         DrawOutMultiplePriceStatus:drawOutMultiplePriceStatus,
         Img:image,
-        TotalDrawOutTimes:totalDrawOutTimes
+        TotalDrawOutTimes:totalDrawOutTimes,
+        Introduce:introduce
       }
-      if (!name || !category || commodityStatus == null || drawOut1Price == null || drawOutMultiplePriceStatus == null || !image || totalDrawOutTimes == null) {
+      if (!introduce || !name || !category || commodityStatus == null || drawOut1Price == null || drawOutMultiplePriceStatus == null ||  (!image && id === 0) || totalDrawOutTimes == null) {
         alert('請確保資料無缺');
         return;
       }
@@ -282,7 +300,7 @@ export default function CommodityManage() {
       if (response.status === 200) { 
         setRows(response.data.source);
         setFilterRows(response.data.source);
-        setTotalRows(response.data.totalRows)
+        setTotalRows(response.data.totalItemCount)
       }
     } catch (error) {
       console.error('Error fetching data: ', error);
@@ -291,7 +309,7 @@ export default function CommodityManage() {
         // Unauthorized
         navigate('/login', { replace: true });
       } else {
-        alert('發生錯誤');
+        alert('權限不足 跳回登入頁');
       }
     }
   };
@@ -309,7 +327,7 @@ export default function CommodityManage() {
         // Unauthorized
         navigate('/login', { replace: true });
       } else {
-        alert('發生錯誤');
+        alert('權限不足 跳回登入頁');
       }
     }
   };
@@ -327,6 +345,7 @@ export default function CommodityManage() {
       setImage(null);
       setTotalDrawOutTimes(0);
       setImagePreviewUrl('');
+      setIntroduce('');
     }else {
       setId(row.id);
       setName(row.name);
@@ -336,8 +355,9 @@ export default function CommodityManage() {
       setDrawOut5Price(row.drawOut5Price);
       setDrawOut10Price(row.drawOut10Price);
       setDrawOutMultiplePriceStatus(row.drawOutMultiplePriceStatus);
-      setTotalDrawOutTimes(totalDrawOutTimes);
+      setTotalDrawOutTimes(row.totalDrawOutTimes);
       setImagePreviewUrl(row.imgUrl);
+      setIntroduce(row.introduce)
     }
     setCommodityFormOpen(true);
   };
@@ -351,6 +371,8 @@ export default function CommodityManage() {
     setPrizes([]);
     setPrizeFormOpen(false);
   };
+
+
   useEffect(() => {
     fetchData();
   }, [page, rowsPerPage]); 
@@ -361,6 +383,7 @@ export default function CommodityManage() {
       setDrawOut10Price(null);
     }
   }, [drawOutMultiplePriceStatus]); 
+
 
   return (
     <>
@@ -422,7 +445,7 @@ export default function CommodityManage() {
       fullWidth
       PaperProps={{
         style: {
-          width: '50%',
+          width: isMobile ? '100%' : '50%',
           margin: 'auto'
         }
       }}
@@ -431,7 +454,7 @@ export default function CommodityManage() {
       <DialogContent>
       <Box sx={{ flexGrow: 0 }}>
         <Grid container spacing={2}>
-          <Grid item xs={3} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
+          <Grid item xs={isMobile ? 12 : 3} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
             <FormControl fullWidth size="small">
               <InputLabel id="stock-amount-label">商品狀態</InputLabel>
               <Select
@@ -442,14 +465,14 @@ export default function CommodityManage() {
                 onChange={(e) => setCommodityStatus(e.target.value)}
               >
                 <MenuItem value={1}>上架中</MenuItem>
-                {/* <MenuItem value={2}>已下架</MenuItem> */}
-                {/* <MenuItem value={3}>準備中</MenuItem> */}
+                <MenuItem value={2}>已下架</MenuItem> 
+                <MenuItem value={3}>準備中</MenuItem>
                 <MenuItem value={4}>40</MenuItem>
                 <MenuItem value={5}>50</MenuItem>
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={3} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
+          <Grid item xs={isMobile ? 12 : 3} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
             <TextField
                 fullWidth 
                 id="outlined-number"
@@ -462,7 +485,7 @@ export default function CommodityManage() {
                 value={name}
               />
           </Grid>
-          <Grid item xs={3} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
+          <Grid item xs={isMobile ? 12 : 3} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
             <FormControl fullWidth size="small">
               <InputLabel id="stock-amount-label">賞品種類</InputLabel>
               <Select
@@ -478,7 +501,7 @@ export default function CommodityManage() {
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={3} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
+          <Grid item xs={isMobile ? 12 : 3} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
             <TextField
                 fullWidth 
                 id="outlined-number"
@@ -491,23 +514,25 @@ export default function CommodityManage() {
                 onChange={(e) => setTotalDrawOutTimes(e.target.value)}
               />
           </Grid>
-          <Grid item xs={3} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={drawOutMultiplePriceStatus}
-                  inputProps={{ 'aria-label': 'controlled' }}
-                  onChange={(e) => setDrawOutMultiplePriceStatus(e.target.checked)}
-                />
-              }
-              label={
-                <Typography variant="body2" style={{ fontFamily: 'Arial', fontSize: '12px' }}>
-                  多重售價
-                </Typography>
-              }
-            />
-          </Grid>
-          <Grid item xs={3} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
+          {category !== '活動賞' && (
+            <Grid item xs={isMobile ? 12 : 3} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={drawOutMultiplePriceStatus}
+                    inputProps={{ 'aria-label': 'controlled' }}
+                    onChange={(e) => setDrawOutMultiplePriceStatus(e.target.checked)}
+                  />
+                }
+                label={
+                  <Typography variant="body2" style={{ fontFamily: 'Arial', fontSize: '12px' }}>
+                    多重售價
+                  </Typography>
+                }
+              />
+            </Grid>
+          )}
+          <Grid item xs={isMobile ? 12 : 3} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
             <TextField
                 fullWidth 
                 id="outlined-number"
@@ -517,10 +542,19 @@ export default function CommodityManage() {
                     shrink: true,
                 }}
                 value={drawOut1Price}
-                onChange={(e) => setDrawOut1Price(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (category !== '活動賞') {
+                      setDrawOut1Price(value);
+                  } else {
+                      setDrawOut1Price(1); // 如果不等于1，就设置为1
+                  }
+              }}
               />
           </Grid>
-          <Grid item xs={3} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
+          {category !== '活動賞' && (
+          <>
+          <Grid item xs={isMobile ? 12 : 3} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
             <TextField
                 fullWidth 
                 id="outlined-number"
@@ -537,7 +571,7 @@ export default function CommodityManage() {
                 onChange={(e) => setDrawOut5Price(e.target.value)}
               />
           </Grid>
-          <Grid item xs={3} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
+          <Grid item xs={isMobile ? 12 : 3} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
             <TextField
                 fullWidth 
                 id="outlined-number"
@@ -554,6 +588,8 @@ export default function CommodityManage() {
                 onChange={(e) => setDrawOut10Price(e.target.value)}
               />
           </Grid>
+          </>
+           )}
           <Grid item xs={12} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
             <input
               accept="image/*"
@@ -578,13 +614,24 @@ export default function CommodityManage() {
           {(image || id !== 0) && (
             <>
               <Grid item xs={12} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
-                <Typography>預覽圖片:</Typography>
+                <Typography style={{fontWeight:'bold' }}>預覽圖片</Typography>
               </Grid>
               <Grid item xs={12} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
-              <img src={imagePreviewUrl} alt="Preview" style={{ maxHeight: '300px', marginTop: '10px' }} />
+              <img src={imagePreviewUrl} alt="Preview" style={{ maxHeight: '300px', marginTop: '0px' }} />
             </Grid>
             </>
           )}
+        </Grid>
+        <Grid item xs={12} sx={{ mt: 3 }} style={{ justifyContent: 'center', display: 'flex'}}>
+          <Typography style={{fontWeight:'bold' }}>賞品介紹</Typography>
+        </Grid>
+        <Grid item xs={12} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
+          <ReactQuill theme="snow" value={introduce} onKeyDown={handleKeyDown} onChange={setIntroduce} modules={{
+            toolbar: toolbarOptions,
+            "emoji-toolbar": true,
+            "emoji-textarea": false,
+            "emoji-shortname": true,
+          }}/>
         </Grid>
       </Box>
       </DialogContent>
@@ -601,17 +648,17 @@ export default function CommodityManage() {
         fullWidth
         PaperProps={{
           style: {
-            width: '50%',
+            width: isMobile ? '100%' : '50%',
             margin: 'auto'
           }
         }}
       >
         <DialogTitle>獎品管理</DialogTitle>
         <DialogContent>
-          <PrizeForm data={null} index={null} fetchPrizeData={fetchPrizeData}/>
-          {prizes.map((prize,index) => (
+          <PrizeForm data={null}  fetchPrizeData={fetchPrizeData}  isMobile={isMobile}/>
+          {prizes.map((prize) => (
             <div key={uuidv4()}>
-              <PrizeForm data={prize} index={index} fetchPrizeData={fetchPrizeData}/>
+              <PrizeForm data={prize}  fetchPrizeData={fetchPrizeData} isMobile={isMobile}/>
             </div>
           ))}
         </DialogContent>
@@ -623,7 +670,8 @@ export default function CommodityManage() {
   );
 }
 
-function PrizeForm({ data, index,fetchPrizeData }) {
+function PrizeForm({ data,fetchPrizeData,isMobile }) {
+  const [introduce,setIntroduce] = useState(data && data.introduce !== undefined ? data.introduce : '');
   const [id, setId] = useState(data && data.id !== undefined ? data.id : 0);
   const [prizeName, setPrizeName] = useState(data && data.prizeName !== undefined ? data.prizeName : '');
   const [prizeLevel, setPrizeLevel] = useState(data && data.prizeLevel !== undefined ? data.prizeLevel : 0);
@@ -635,24 +683,18 @@ function PrizeForm({ data, index,fetchPrizeData }) {
   const [isOverAfterSoldOut, setIsOverAfterSoldOut] = useState(data && data.isOverAfterSoldOut !== undefined ? data.isOverAfterSoldOut : false);
   const [image, setImage] = useState(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState(data && data.imgUrl !== undefined ? data.imgUrl : '');
+
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       const img = new Image();
-      img.onload = () => {
-        // img.width === 800 && img.height === 800
-        if (true) {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            setImage(file);
-            setImagePreviewUrl(reader.result);
-          };
-          reader.readAsDataURL(file);
-        } else {
-          alert('圖片尺寸必須為800px * 800px');
-          setImage(null);
-          setImagePreviewUrl('');
-        }
+        img.onload = () => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImage(file);
+          setImagePreviewUrl(reader.result);
+        };
+        reader.readAsDataURL(file);
       };
       img.onerror = () => {
         alert('無效的圖片文件');
@@ -675,13 +717,16 @@ function PrizeForm({ data, index,fetchPrizeData }) {
     } catch (error) {
       if (error.response && error.response.status === 403) {
         alert('無此權限');
-      } else {
-        alert('內部錯誤');
       }
       return null;
     }
   };
 
+  const handleKeyDown = (event) => {  
+    if (event.key === 'Enter') {  
+      setIntroduce(prev => `${prev  }<br/>`);
+    }
+  };
   const handleSubmit = async (info) => {
     const request = {
       id,
@@ -696,8 +741,10 @@ function PrizeForm({ data, index,fetchPrizeData }) {
       ReclaimPrice: reclaimPrice,
       Freight: freight,
       IsOverAfterSoldOut: isOverAfterSoldOut,
+      Introduce:introduce
     };
-    if (!prizeName || prizeLevel === undefined || sort === undefined || (!image && id === 0) || size === undefined || amount === undefined || freight === undefined) {
+
+    if (!introduce || !prizeName || prizeLevel === undefined || sort === undefined || (!image && id === 0) || size === undefined || amount === undefined || freight === undefined) {
       alert('請確保資料無缺');
       return;
     }
@@ -724,15 +771,14 @@ function PrizeForm({ data, index,fetchPrizeData }) {
     }  
     
   };
-
   return (
     <Box sx={{ flexGrow: 0 }}>
       <Typography variant="body2" style={{ fontSize: '16px', marginBottom: '1%' }}>
-        獎品-{index ? index + 1 : 0}
+        獎品-{data && data.id !== undefined ? data.id : 0}
       </Typography>
       <Grid container spacing={2}>
         {/* 獎品名稱 */}
-        <Grid item xs={3} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
+        <Grid item xs={isMobile ? 12 : 3} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
           <TextField
             fullWidth
             id="outlined-number"
@@ -746,7 +792,7 @@ function PrizeForm({ data, index,fetchPrizeData }) {
           />
         </Grid>
         {/* 獎品等級 */}
-        <Grid item xs={3} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
+        <Grid item xs={isMobile ? 12 : 3} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
           <FormControl fullWidth size="小">
             <InputLabel id="prize-level-label">賞品種類</InputLabel>
             <Select
@@ -756,17 +802,14 @@ function PrizeForm({ data, index,fetchPrizeData }) {
               label="獎品等級"
               onChange={(e) => setPrizeLevel(e.target.value)}
             >
-              <MenuItem value={0}>S級</MenuItem>
-              <MenuItem value={1}>A級</MenuItem>
-              <MenuItem value={2}>B級</MenuItem>
-              <MenuItem value={3}>C級</MenuItem>
-              <MenuItem value={4}>D級</MenuItem>
-              <MenuItem value={5}>E級</MenuItem>
+              <MenuItem value={0}>SP級</MenuItem>
+              <MenuItem value={27}>Last One</MenuItem>
+              {MenuItems()}
             </Select>
           </FormControl>
         </Grid>
         {/* 排序 */}
-        <Grid item xs={3} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
+        <Grid item xs={isMobile ? 12 : 3} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
           <TextField
             fullWidth
             id="outlined-number"
@@ -780,7 +823,7 @@ function PrizeForm({ data, index,fetchPrizeData }) {
           />
         </Grid>
         {/* 尺寸 */}
-        <Grid item xs={3} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
+        <Grid item xs={isMobile ? 12 : 3} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
           <TextField
             fullWidth
             id="outlined-number"
@@ -794,7 +837,7 @@ function PrizeForm({ data, index,fetchPrizeData }) {
           />
         </Grid>
         {/* 數量 */}
-        <Grid item xs={3} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
+        <Grid item xs={isMobile ? 12 : 3} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
           <TextField
             fullWidth
             id="outlined-number"
@@ -808,7 +851,7 @@ function PrizeForm({ data, index,fetchPrizeData }) {
           />
         </Grid>
         {/* 回收價格 */}
-        <Grid item xs={3} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
+        <Grid item xs={isMobile ? 12 : 3} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
           <TextField
             fullWidth
             id="outlined-number"
@@ -822,7 +865,7 @@ function PrizeForm({ data, index,fetchPrizeData }) {
           />
         </Grid>
         {/* 運費 */}
-        <Grid item xs={3} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
+        <Grid item xs={isMobile ? 12 : 3} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
           <TextField
             fullWidth
             id="outlined-number"
@@ -836,7 +879,7 @@ function PrizeForm({ data, index,fetchPrizeData }) {
           />
         </Grid>
         {/* 是否售完即下架 */}
-        <Grid item xs={3} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
+        <Grid item xs={isMobile ? 12 : 3} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
           <FormControlLabel
             control={
               <Checkbox
@@ -877,10 +920,10 @@ function PrizeForm({ data, index,fetchPrizeData }) {
         {(image || id !== 0) && (
           <>
             <Grid item xs={12} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
-              <Typography>預覽圖片:</Typography>
+              <Typography style={{fontWeight:'bold' }}>預覽圖片</Typography>
             </Grid>
             <Grid item xs={12} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
-              <img src={imagePreviewUrl} alt="Preview" style={{ maxHeight: '300px', marginTop: '10px' }} />
+              <img src={imagePreviewUrl} alt="Preview" style={{ maxHeight: '300px', marginTop: '0px' }} />
             </Grid>
           </>
         )}
@@ -893,11 +936,34 @@ function PrizeForm({ data, index,fetchPrizeData }) {
           </>
         )}
       </Grid>
+      <Grid item xs={12} sx={{ mt: 3 }} style={{ justifyContent: 'center', display: 'flex'}}>
+          <Typography style={{fontWeight:'bold' }}>獎品介紹</Typography>
+      </Grid>
       <Grid item xs={12} sx={{ mt: 1 }} style={{ justifyContent: 'center', display: 'flex' }}>
-        -----------------------------------------------------------------
+        <ReactQuill theme="snow" onKeyDown={handleKeyDown} value={introduce} onChange={setIntroduce}   modules={{
+        toolbar: toolbarOptions,
+        "emoji-toolbar": true,
+        "emoji-textarea": false,
+        "emoji-shortname": true,
+      }}/>
+      </Grid>
+      <Grid item xs={12} sx={{ mt: 10, display: 'flex', justifyContent: 'center' }}>
+        <hr style={{ width: '100%', color: 'black', backgroundColor: 'black', height: 8 }} />
       </Grid>
     </Box>
   );
 }
 
 
+const MenuItems = () => {
+  const menuItems = [];
+  // eslint-disable-next-line no-plusplus
+  for (let i = 1; i <= 26; i++) {
+    menuItems.push(
+      <MenuItem key={i} value={i}>
+        {String.fromCharCode(64 + i)}級
+      </MenuItem>
+    );
+  }
+  return menuItems;
+};

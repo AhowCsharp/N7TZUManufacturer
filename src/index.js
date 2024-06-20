@@ -16,6 +16,26 @@ axios.interceptors.request.use(config => {
     return Promise.reject(error);
 });
 
+axios.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response && error.response.status === 400) {
+      const errorDetails = error.response.data;
+      if (errorDetails && errorDetails.errors) {
+        alert(`Error: ${errorDetails.errors}`);
+      } else {
+        alert('A bad request error occurred.');
+      }
+    } else if (error.response && error.response.status === 500) {
+      const errorDetails = error.response.data;
+      const errorMessage = errorDetails.Message || 'Internal Server Error';
+      const innerMessage = errorDetails.InnerMessage ? `\nDetails: ${errorDetails.InnerMessage}` : '';
+      alert(`Error: ${errorMessage}${innerMessage}`);
+    }
+    return Promise.reject(error);
+  }
+);
+
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 

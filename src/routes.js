@@ -8,7 +8,9 @@ import Page404 from './pages/Page404';
 
 import ManufacturerInfo from './erp/ManufacturerInfo';
 import CommodityManage from './erp/CommodityManage';
-
+import OrdersManage from './erp/OrdersManage';
+import SalesAmountManage from './erp/SalesAmountManage';
+import ReclaimLogsManage from './erp/ReclaimLogsManage';
 // ----------------------------------------------------------------------
 
 export default function Router() {
@@ -28,6 +30,9 @@ export default function Router() {
         { element: <Navigate to="/info" />, index: true },
         { path: 'info', element: <ManufacturerInfo /> },
         { path: 'commodity', element: <CommodityManage /> },
+        { path: 'orders', element: <OrdersManage /> },
+        { path: 'salesamount', element: <SalesAmountManage /> },
+        { path: 'reclaim', element: <ReclaimLogsManage /> },
       ],
     },
     {

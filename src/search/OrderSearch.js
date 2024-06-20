@@ -26,7 +26,7 @@ const StyledSearch = styled(OutlinedInput)(({ theme }) => ({
   },
 }));
 
-export default function ManufacturerSearch({ rows, setFilterRows }) {
+export default function OrderSearch({ rows, setFilterRows }) {
   const [filterValue, setFilterValue] = useState('');
 
 
@@ -39,9 +39,9 @@ export default function ManufacturerSearch({ rows, setFilterRows }) {
         // 如果搜索值為空，返回原始行
         setFilterRows(rows);
       }else {
-      const filteredrows = rows.filter((manufacturer) =>
-      manufacturer.name.toLowerCase().includes(searchValue.toLowerCase())||
-      manufacturer.status.toLowerCase().includes(searchValue.toLowerCase())
+      const filteredrows = rows.filter((order) =>
+      order.orderNo.toLowerCase().includes(searchValue.toLowerCase())||
+      order.customerName.toLowerCase().includes(searchValue.toLowerCase())
       );
       setFilterRows(filteredrows);
     }
